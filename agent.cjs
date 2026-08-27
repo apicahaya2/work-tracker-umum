@@ -143,6 +143,9 @@ async function runAgent() {
   console.log(`Found ${repos.length} repositories.`);
 
   for (const repoInfo of repos) {
+    let localAuthor = await execPromise('git config user.name', repoInfo.path);
+    localAuthor = localAuthor.trim().toLowerCase();
+
     const reflogRaw = await execPromise('git reflog --date=unix', repoInfo.path);
     const reflogEntries = parseReflog(reflogRaw);
     
@@ -156,6 +159,11 @@ async function runAgent() {
       if (!line) continue;
       const [hash, author, date, subject, refs] = line.split('|');
       
+      // Filter out other authors! Only include local user's commits
+      if (localAuthor && !author.toLowerCase().includes(localAuthor) && !localAuthor.includes(author.toLowerCase())) {
+        continue;
+      }
+
       if (isThirdPartyOrFrameworkCommit(repoInfo.name, author, subject)) continue;
 
       const dateObj = new Date(date);
