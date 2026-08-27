@@ -357,7 +357,6 @@ export function App() {
   const fetchRepositories = async () => {
     setLoadingRepos(true);
     try {
-      const host = window.location.hostname || 'localhost';
       const res = await fetch(`/api/repositories`);
       if (res.ok) {
         const data = await res.json();
@@ -440,7 +439,6 @@ export function App() {
         reqEnd = format(endOfMonth(curr), 'yyyy-MM-dd');
       }
 
-      const host = window.location.hostname || 'localhost';
       const res = await fetch(`/api/calendar-events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -549,7 +547,6 @@ export function App() {
   const fetchJiraProjects = async () => {
     if (!jiraHost || !jiraToken) return;
     try {
-      const host = window.location.hostname || 'localhost';
       const res = await fetch(`/api/jira-projects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -582,7 +579,6 @@ export function App() {
   const testJiraConnection = async () => {
     setJiraTestResult(null);
     try {
-      const host = window.location.hostname || 'localhost';
       const res = await fetch(`/api/jira-test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -648,7 +644,6 @@ export function App() {
         reqEnd = format(endOfMonth(curr), 'yyyy-MM-dd');
       }
 
-      const host = window.location.hostname || 'localhost';
       const res = await fetch(`/api/jira-issues`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
