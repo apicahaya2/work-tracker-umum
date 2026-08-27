@@ -27,6 +27,7 @@ import {
 import { format, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend } from 'date-fns';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Onboarding } from './Onboarding';
+import { supabase } from './supabase';
 
 interface Repository {
   name: string;
@@ -357,7 +358,7 @@ export function App() {
     setLoadingRepos(true);
     try {
       const host = window.location.hostname || 'localhost';
-      const res = await fetch(`http://${host}:3001/api/repositories`);
+      const res = await fetch(`/api/repositories`);
       if (res.ok) {
         const data = await res.json();
         setRepos(data.repositories || []);
@@ -401,16 +402,17 @@ export function App() {
         reqEnd = format(endOfMonth(curr), 'yyyy-MM-dd');
       }
 
-      const host = window.location.hostname || 'localhost';
-      const res = await fetch(`http://${host}:3001/api/git-activity`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repos: selectedRepos, startDate: reqStart, endDate: reqEnd })
-      });
+      // Fetch from Supabase
+      const { data, error } = await supabase
+        .from('git_activities')
+        .select('*')
+        .gte('date', reqStart)
+        .lte('date', reqEnd + 'T23:59:59');
 
-      if (res.ok) {
-        const data = await res.json();
-        setGitActivities(data.activities || []);
+      if (!error && data) {
+        setGitActivities(data);
+      } else {
+        console.error('Supabase error:', error);
       }
     } catch (e) {
       console.warn('Could not fetch git activities from backend');
@@ -439,7 +441,7 @@ export function App() {
       }
 
       const host = window.location.hostname || 'localhost';
-      const res = await fetch(`http://${host}:3001/api/calendar-events`, {
+      const res = await fetch(`/api/calendar-events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date: selectedDate, startDate: reqStart, endDate: reqEnd, icalUrl })
@@ -548,7 +550,7 @@ export function App() {
     if (!jiraHost || !jiraToken) return;
     try {
       const host = window.location.hostname || 'localhost';
-      const res = await fetch(`http://${host}:3001/api/jira-projects`, {
+      const res = await fetch(`/api/jira-projects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jiraHost, jiraEmail, jiraToken })
@@ -581,7 +583,7 @@ export function App() {
     setJiraTestResult(null);
     try {
       const host = window.location.hostname || 'localhost';
-      const res = await fetch(`http://${host}:3001/api/jira-test`, {
+      const res = await fetch(`/api/jira-test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jiraHost, jiraEmail, jiraToken })
@@ -647,7 +649,7 @@ export function App() {
       }
 
       const host = window.location.hostname || 'localhost';
-      const res = await fetch(`http://${host}:3001/api/jira-issues`, {
+      const res = await fetch(`/api/jira-issues`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
