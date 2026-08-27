@@ -189,7 +189,10 @@ async function runAgent() {
         jiraKey: (subject.match(/([a-zA-Z]{2,10}-\d+)/i) || [])[1]?.toUpperCase() || ''
       };
 
-      await supabase.from('git_activities').upsert(record, { onConflict: 'hash' });
+      const { error } = await supabase.from('git_activities').upsert(record, { onConflict: 'hash' });
+      if (error) {
+        console.error('Supabase Error on hash', hash, ':', error.message);
+      }
     }
   }
   console.log('✅ Sync to Supabase complete!');

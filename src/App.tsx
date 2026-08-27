@@ -353,29 +353,31 @@ export function App() {
   const [newTaskDuration, setNewTaskDuration] = useState('1');
   const [newTaskDate, setNewTaskDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
-  // Fetch repositories from local backend
+  // Fetch repositories from Supabase
   const fetchRepositories = async () => {
     setLoadingRepos(true);
     try {
-      const res = await fetch(`/api/repositories`);
-      if (res.ok) {
-        const data = await res.json();
-        setRepos(data.repositories || []);
-        // Default to BakmiGM mobile repos if not previously customized in localStorage
-        if (data.repositories && data.repositories.length > 0) {
+      const { data, error } = await supabase
+        .from('git_activities')
+        .select('repo');
+      
+      if (!error && data) {
+        // Get unique repository names
+        const uniqueRepos = Array.from(new Set(data.map((item: any) => item.repo)))
+          .map(name => ({ name: name, path: '' }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+          
+        setRepos(uniqueRepos);
+        
+        if (uniqueRepos.length > 0) {
           const saved = localStorage.getItem('wt_selectedRepos');
           if (!saved) {
-            const bakmiRepos = data.repositories.filter((r: Repository) => r.name.toLowerCase().includes('bakmigm'));
-            if (bakmiRepos.length > 0) {
-              setSelectedRepos(bakmiRepos.map((r: Repository) => r.name));
-            } else {
-              setSelectedRepos(data.repositories.map((r: Repository) => r.name));
-            }
+            setSelectedRepos(uniqueRepos.map((r: any) => r.name));
           }
         }
       }
     } catch (e) {
-      console.warn('Backend server not connected yet, using fallback/demo mode');
+      console.warn('Failed to fetch repos from Supabase', e);
     } finally {
       setLoadingRepos(false);
     }
