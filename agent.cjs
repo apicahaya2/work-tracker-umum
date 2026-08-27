@@ -195,7 +195,7 @@ async function runAgent() {
         hash,
         author,
         date: dateObj.toISOString(),
-        timestamp: dateObj.getTime(),
+        timestamp: Math.floor(dateObj.getTime() / 1000),
         activeDurationHours,
         workStartTime,
         workEndTime,
