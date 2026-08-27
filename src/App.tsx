@@ -540,7 +540,7 @@ export function App() {
     try {
       return JSON.parse(text);
     } catch {
-      throw new Error(`Backend (${endpointName}) mengembalikan respon bukan JSON (Status ${res.status}). Pastikan backend server running di port 3001 (jalankan: npm run server).`);
+      throw new Error(`Backend (${endpointName}) mengembalikan respon bukan JSON (Status ${res.status}). Pastikan konfigurasi API Cloud Anda benar.`);
     }
   };
 
