@@ -167,12 +167,19 @@ async function runAgent() {
       const tracking = findActiveWorkDuration(reflogEntries, commitTimestamp, hash, dayStartTs, dayEndTs);
       
       let activeDurationHours = 0.5;
-      let workStartTime = dateObj.toISOString();
-      let workEndTime = dateObj.toISOString();
+      let workStartTime = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
+      let workEndTime = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
       if (tracking) {
         activeDurationHours = tracking.durationHours;
-        workStartTime = new Date(tracking.workStartTs * 1000).toISOString();
-        workEndTime = new Date(tracking.workEndTs * 1000).toISOString();
+        const sDate = new Date(tracking.workStartTs * 1000);
+        const eDate = new Date(tracking.workEndTs * 1000);
+        workStartTime = sDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
+        workEndTime = eDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
+      } else {
+        const sDate = new Date((commitTimestamp - (activeDurationHours * 3600)) * 1000);
+        const eDate = new Date(commitTimestamp * 1000);
+        workStartTime = sDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
+        workEndTime = eDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
       }
 
       const record = {
