@@ -699,36 +699,40 @@ const fetchJiraApi = async (url: string, authHeader: string, options: { method?:
 };
 
 app.post('/api/jira-test', async (req, res) => {
-  const { jiraHost, jiraEmail, jiraToken } = req.body;
-  if (!jiraHost || !jiraToken) {
-    return res.status(400).json({ success: false, error: 'Jira Domain & API Token wajib diisi' });
-  }
-
-  const cleanHost = jiraHost.replace(/^https?:\/\//, '').replace(/\/+$/, '');
-  const authHeader = jiraEmail
-    ? `Basic ${Buffer.from(`${jiraEmail.trim()}:${jiraToken.trim()}`).toString('base64')}`
-    : `Bearer ${jiraToken.trim()}`;
-
-  // Try v3 API first (Jira Cloud), fallback to v2 (Jira Server / Data Center)
-  let result = await fetchJiraApi(`https://${cleanHost}/rest/api/3/myself`, authHeader);
-  if (!result.ok && result.status === 404) {
-    result = await fetchJiraApi(`https://${cleanHost}/rest/api/2/myself`, authHeader);
-  }
-
-  if (!result.ok) {
-    return res.status(result.status || 500).json({ success: false, error: result.error });
-  }
-
-  const userData = result.data;
-  res.json({
-    success: true,
-    user: {
-      accountId: userData.accountId || '',
-      displayName: userData.displayName || userData.name || 'Jira User',
-      emailAddress: userData.emailAddress || jiraEmail || '',
-      avatarUrl: userData.avatarUrls?.['48x48'] || userData.avatarUrls?.['32x32']
+  try {
+    const { jiraHost, jiraEmail, jiraToken } = req.body;
+    if (!jiraHost || !jiraToken) {
+      return res.status(400).json({ success: false, error: 'Jira Domain & API Token wajib diisi' });
     }
-  });
+
+    const cleanHost = jiraHost.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    const authHeader = jiraEmail
+      ? `Basic ${Buffer.from(`${jiraEmail.trim()}:${jiraToken.trim()}`).toString('base64')}`
+      : `Bearer ${jiraToken.trim()}`;
+
+    let result = await fetchJiraApi(`https://${cleanHost}/rest/api/3/myself`, authHeader);
+    if (!result.ok && result.status === 404) {
+      result = await fetchJiraApi(`https://${cleanHost}/rest/api/2/myself`, authHeader);
+    }
+
+    if (!result.ok) {
+      return res.status(result.status || 500).json({ success: false, error: result.error });
+    }
+
+    const userData = result.data;
+    res.json({
+      success: true,
+      user: {
+        accountId: userData.accountId || '',
+        displayName: userData.displayName || userData.name || 'Jira User',
+        emailAddress: userData.emailAddress || jiraEmail || '',
+        avatarUrl: userData.avatarUrls?.['48x48'] || userData.avatarUrls?.['32x32']
+      }
+    });
+  } catch (err: any) {
+    console.error('Unhandled Error in /api/jira-test:', err);
+    res.status(500).json({ success: false, error: 'Internal Server Error: ' + err.message });
+  }
 });
 
 // Get Jira Projects List
@@ -765,7 +769,44 @@ app.post('/api/jira-projects', async (req, res) => {
     return a.name.localeCompare(b.name);
   });
 
-  res.json({ projects });
+  try {
+    const { jiraHost, jiraEmail, jiraToken } = req.body;
+    if (!jiraHost || !jiraToken) {
+      return res.json({ projects: [] });
+    }
+
+    const cleanHost = jiraHost.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    const authHeader = jiraEmail
+      ? `Basic ${Buffer.from(`${jiraEmail.trim()}:${jiraToken.trim()}`).toString('base64')}`
+      : `Bearer ${jiraToken.trim()}`;
+
+    let result = await fetchJiraApi(`https://${cleanHost}/rest/api/3/project`, authHeader);
+    if (!result.ok && result.status === 404) {
+      result = await fetchJiraApi(`https://${cleanHost}/rest/api/2/project`, authHeader);
+    }
+
+    if (!result.ok || !Array.isArray(result.data)) {
+      return res.json({ projects: [] });
+    }
+
+    const projects = result.data.map((p: any) => ({
+      id: p.id,
+      key: p.key,
+      name: p.name,
+      avatarUrl: p.avatarUrls?.['24x24'] || p.avatarUrls?.['32x32'] || ''
+    })).sort((a: any, b: any) => {
+      const aIsBakmi = a.name.toLowerCase().includes('bakmi') || a.key.toLowerCase().includes('bakmi') || a.key.toLowerCase().includes('bgm');
+      const bIsBakmi = b.name.toLowerCase().includes('bakmi') || b.key.toLowerCase().includes('bakmi') || b.key.toLowerCase().includes('bgm');
+      if (aIsBakmi && !bIsBakmi) return -1;
+      if (!aIsBakmi && bIsBakmi) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    res.json({ projects });
+  } catch (err: any) {
+    console.error('Error in /api/jira-projects:', err);
+    res.json({ projects: [] });
+  }
 });
 
 app.post('/api/jira-issues', async (req, res) => {
