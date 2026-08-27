@@ -3,6 +3,7 @@ import { Calendar, Key, Clock, CheckCircle } from 'lucide-react';
 
 interface OnboardingProps {
   onComplete: (data: {
+    gitAuthorName: string;
     icalUrl: string;
     jiraHost: string;
     jiraEmail: string;
@@ -15,6 +16,7 @@ interface OnboardingProps {
 }
 
 export function Onboarding({ onComplete }: OnboardingProps) {
+  const [gitAuthorName, setGitAuthorName] = useState('');
   const [icalUrl, setIcalUrl] = useState('');
   const [jiraHost, setJiraHost] = useState('');
   const [jiraEmail, setJiraEmail] = useState('');
@@ -27,6 +29,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onComplete({
+      gitAuthorName,
       icalUrl,
       jiraHost,
       jiraEmail,
@@ -47,6 +50,25 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
+        {/* Git Identity Section */}
+        <div>
+          <h2 style={{ fontSize: '18px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <Key size={20} /> Identity (Required)
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '14px', fontWeight: '500' }}>Git Author Name</label>
+            <input 
+              type="text" 
+              required
+              value={gitAuthorName}
+              onChange={e => setGitAuthorName(e.target.value)}
+              placeholder="e.g. John Doe"
+              style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', color: 'var(--text-color)' }}
+            />
+            <p style={{ fontSize: '12px', color: 'var(--text-dim)' }}>This will filter the tracker to only show your commits (useful for team dashboards).</p>
+          </div>
+        </div>
+
         {/* Calendar Section */}
         <div>
           <h2 style={{ fontSize: '18px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>

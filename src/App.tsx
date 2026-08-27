@@ -404,11 +404,17 @@ export function App() {
       }
 
       // Fetch from Supabase
-      const { data, error } = await supabase
+      let query = supabase
         .from('git_activities')
         .select('*')
         .gte('date', reqStart)
         .lte('date', reqEnd + 'T23:59:59');
+
+      if (gitAuthorName) {
+        query = query.ilike('author', `%${gitAuthorName}%`);
+      }
+
+      const { data, error } = await query;
 
       if (!error && data) {
         setGitActivities(data);
@@ -478,6 +484,7 @@ export function App() {
   });
 
   const handleOnboardingComplete = (data: any) => {
+    setGitAuthorName(data.gitAuthorName);
     setIcalUrl(data.icalUrl);
     setJiraHost(data.jiraHost);
     setJiraEmail(data.jiraEmail);
@@ -493,6 +500,7 @@ export function App() {
       localStorage.setItem('wt_dailyMeetingDuration', data.dailyMeetingDuration.toString());
     }
     
+    localStorage.setItem('wt_gitAuthor', data.gitAuthorName || '');
     localStorage.setItem('wt_icalUrl', data.icalUrl);
     localStorage.setItem('wt_jiraHost', data.jiraHost);
     localStorage.setItem('wt_jiraEmail', data.jiraEmail);
@@ -501,6 +509,8 @@ export function App() {
     localStorage.setItem('wt_onboardingComplete', 'true');
     setIsOnboardingComplete(true);
   };
+
+  const [gitAuthorName, setGitAuthorName] = useState<string>(() => localStorage.getItem('wt_gitAuthor') || '');
 
   // Jira Integration state
   const [jiraHost, setJiraHost] = useState<string>(() => localStorage.getItem('wt_jiraHost') || '');
@@ -1320,6 +1330,13 @@ export function App() {
               </button>
             </>
           )}
+          <button 
+            className="btn-secondary"
+            onClick={() => setIsOnboardingComplete(false)}
+            style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            ⚙️ Edit Profil
+          </button>
         </div>
       </header>
 
