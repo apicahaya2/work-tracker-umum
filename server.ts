@@ -769,7 +769,8 @@ app.post('/api/jira-projects', async (req, res) => {
 });
 
 app.post('/api/jira-issues', async (req, res) => {
-  const { jiraHost, jiraEmail, jiraToken, startDate, endDate, scope = 'active_sprint', searchQuery, projectKey, onlyActiveSprint = true } = req.body;
+  try {
+    const { jiraHost, jiraEmail, jiraToken, startDate, endDate, scope = 'active_sprint', searchQuery, projectKey, onlyActiveSprint = true } = req.body;
   if (!jiraHost || !jiraToken) {
     return res.status(400).json({ issues: [], error: 'Jira Domain & API Token tidak dikonfigurasi' });
   }
@@ -1208,9 +1209,15 @@ app.post('/api/jira-issues', async (req, res) => {
   });
 
   res.json({ issues, total: issues.length, jqlUsed: jql });
+  } catch (err: any) {
+    console.error('Unhandled Error in /api/jira-issues:', err);
+    res.status(500).json({ issues: [], error: 'Internal Server Error: ' + err.message });
+  }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Git & Antigravity Tracker Server running on http://0.0.0.0:${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Git & Antigravity Tracker Server running on http://0.0.0.0:${PORT}`);
+  });
+}
 export default app;
